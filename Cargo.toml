@@ -1,0 +1,16 @@
+[package]
+name = "walt_v1"
+version = "0.1.0"
+edition = "2021"
+authors = ["Rory Spring-Vanhorne <rory.spring@icloud.com>"]
+description = "Walt v1: Rust to Animated Rust (.ars) encoder/decoder"
+license = "MIT"
+
+[dependencies]
+regex = "1"
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"
+serde = { version = "1.0", features = ["derive"] }
+ron = "0.8"
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"

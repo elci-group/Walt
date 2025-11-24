@@ -1,0 +1,16 @@
+# Rust
+/target
+Cargo.lock
+
+# IDEs
+.idea/
+.vscode/
+
+# Temporary Files
+*.oip.backup
+*.ars
+*.txt
+main_round_tripped.rs
+test_results.rs
+.dn_cache/
+ij2.sh
