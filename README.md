@@ -1,12 +1,5 @@
 <p align="center">
-  <pre align="center">
- __      __      ___.       .__
-/  \    /  \ ____\_ |__   __|  |
-\   \/\/   // __ \| __ \ /  |  |
- \        /\  ___/| \_\ \/|  |  |
-  \__/\  /  \___  >___  /\______|
-       \/       \/    \/
-  </pre>
+  <img src="Walt_Logo.png" alt="Walt Logo" width="400">
 </p>
 
 <p align="center">
