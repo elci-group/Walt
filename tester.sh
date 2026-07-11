@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
+# End-to-end round-trip fidelity gate for walt.
+#
+# Encodes a complex Rust source file to .ars, decodes it back, and requires
+# a BYTE-IDENTICAL round trip. Any difference is a test failure — there is
+# no partial-credit "accuracy" metric here.
 set -euo pipefail
 
+cd "$(dirname "$0")"
+cargo build --quiet
+
 TMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TMP_DIR"' EXIT
+
 TEST_FILE="$TMP_DIR/test.rs"
-ENCODED_FILE="$TMP_DIR/encoded.txt"
+ENCODED_FILE="$TMP_DIR/test.ars"
 DECODED_FILE="$TMP_DIR/decoded_test.rs"
 
-echo "📝 Creating complex test Rust source file..."
 cat > "$TEST_FILE" << 'EOF'
 // --- START test.rs ---
 use std::collections::{HashMap, HashSet};
@@ -98,73 +107,18 @@ fn main() {
 // --- END test.rs ---
 EOF
 
-echo "🔧 Running encoder..."
-if ! walt encode "$TEST_FILE" "$ENCODED_FILE"; then
-    echo "❌ Encoder failed"
+WALT=./target/debug/walt
+
+echo "🔧 Encoding..."
+"$WALT" encode "$TEST_FILE" "$ENCODED_FILE"
+
+echo "🔧 Decoding..."
+"$WALT" decode "$ENCODED_FILE" "$DECODED_FILE"
+
+echo "🔍 Requiring byte-identical round trip..."
+if diff -u "$TEST_FILE" "$DECODED_FILE"; then
+    echo "✅ Round trip is byte-identical."
+else
+    echo "❌ Round trip is LOSSY: decoded output differs from the input (see diff above)."
     exit 1
 fi
-
-# Ensure encoded file exists
-if [ ! -f "$ENCODED_FILE" ]; then
-    echo "❌ Encoded file not found!"
-    exit 1
-fi
-
-echo "🔧 Running decoder..."
-if ! walt decode "$ENCODED_FILE" "$DECODED_FILE"; then
-    echo "❌ Decoder failed"
-    exit 1
-fi
-
-# Ensure decoded file exists
-if [ ! -f "$DECODED_FILE" ]; then
-    echo "❌ Decoded file not found!"
-    exit 1
-fi
-
-echo "🔍 Comparing syntax element accuracy..."
-
-declare -A ELEMENTS=(
-    ["traits"]="trait Processor"
-    ["use_statements"]="use std::collections"
-    ["impl_blocks"]="impl<T: Debug> Processor<T>"
-    ["functions"]="fn calculate_sum"
-    ["statics"]="static mut GLOBAL_STATE"
-    ["constants"]="const DEFAULT_CAPACITY"
-    ["macros"]="macro_rules! create_tuple"
-    ["type_aliases"]="type MyResult"
-    ["structs"]="struct DataHolder"
-    ["enums"]="enum Status"
-)
-
-compute_accuracy() {
-    local orig="$1"
-    local dec="$2"
-    local total_chars=${#orig}
-    local matched_chars=0
-
-    for ((i=0; i<total_chars; i++)); do
-        [[ "${orig:i:1}" == "${dec:i:1}" ]] && ((matched_chars++))
-    done
-
-    if (( total_chars == 0 )); then
-        echo "100.00"
-    else
-        awk "BEGIN {printf \"%.2f\", ($matched_chars/$total_chars)*100}"
-    fi
-}
-
-for key in "${!ELEMENTS[@]}"; do
-    pattern="${ELEMENTS[$key]}"
-    orig_match=$(grep -E "$pattern" "$TEST_FILE" || true)
-    dec_match=$(grep -E "$pattern" "$DECODED_FILE" || true)
-
-    if [ -z "$dec_match" ]; then
-        echo "❌ $key FAILED: missing or mismatched"
-    else
-        accuracy=$(compute_accuracy "$orig_match" "$dec_match")
-        echo "✅ $key | Accuracy: $accuracy%"
-    fi
-done
-
-echo "🎉 Test complete! Decoded file at: $DECODED_FILE"

@@ -1,15 +1,23 @@
-#! /bin/bash
+#!/usr/bin/env bash
+# Manual smoke test: round-trip src/main.rs through walt and show the result.
+# Uses a temp dir so no generated artifacts land in the source tree.
+set -euo pipefail
 
-echo "Here is the original main.rs"
-cat ~/walt_v1/src/main.rs
-echo "Encoding with walt" 
-cargo run -- encode ~/walt_v1/src/main.rs ~/walt_v1/src/test_A.ars || (echo "Encoding failed" & exit)
+cd "$(dirname "$0")"
 
-echo "Here is the .ars version of the main.rs script"
-cat ~/walt_v1/src/test_A.ars
-echo "Let's try decoding the .ars back to .rs"
-cargo run -- decode ~/walt_v1/src/test_A.ars ~/walt_v1/src/test_B.rs || echo "Decoding failed"
-echo "Here is decoded version"
-cat ~/walt_v1/src/test_B.rs
+TMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TMP_DIR"' EXIT
 
+echo "== Original src/main.rs =="
+cat src/main.rs
 
+echo "== Encoding to .ars =="
+cargo run --quiet -- encode src/main.rs "$TMP_DIR/main.ars"
+cat "$TMP_DIR/main.ars"
+
+echo "== Decoding back to Rust =="
+cargo run --quiet -- decode "$TMP_DIR/main.ars" "$TMP_DIR/main_decoded.rs"
+cat "$TMP_DIR/main_decoded.rs"
+
+echo "== Diff (original vs decoded) =="
+diff src/main.rs "$TMP_DIR/main_decoded.rs" || true

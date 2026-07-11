@@ -64,10 +64,9 @@ pub fn reconstruct(ars_type_aliases: &[ARSTypeAlias]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use anyhow::Result;
 
     #[test]
-    fn test_single_type_alias_reconstruct() -> Result<()> {
+    fn test_single_type_alias_reconstruct() {
         let aliases = vec![
             ARSTypeAlias {
                 name: "MyInt".to_string(),
@@ -78,11 +77,10 @@ mod tests {
         ];
         let reconstructed = reconstruct(&aliases);
         assert!(reconstructed.contains("type MyInt = i32;"));
-        Ok(())
     }
 
     #[test]
-    fn test_multiple_type_aliases_reconstruct() -> Result<()> {
+    fn test_multiple_type_aliases_reconstruct() {
         let aliases = vec![
             ARSTypeAlias {
                 name: "MyInt".to_string(),
@@ -100,7 +98,6 @@ mod tests {
         let reconstructed = reconstruct(&aliases);
         assert!(reconstructed.contains("type MyInt = i32;"));
         assert!(reconstructed.contains("pub type MyString = String;"));
-        Ok(())
     }
 
     #[test]

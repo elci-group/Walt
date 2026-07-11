@@ -3,8 +3,8 @@
 use std::path::PathBuf;
 use std::env;
 
-use walt_v1::encoder;
-use walt_v1::decoder;
+use walt::encoder;
+use walt::decoder;
 
 /// CLI for encoding/decoding Rust source files or projects
 fn main() {

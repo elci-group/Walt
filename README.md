@@ -12,13 +12,13 @@
 
 ---
 
-**Walt** is a command-line tool for encoding Rust source code into `.ars` (Animated Rust Syntax), a custom RON-based format, and decoding it back with perfect fidelity. It serves as a foundational tool for code analysis, transformation, and visualization projects.
+**Walt** is an experimental command-line tool for encoding Rust source code into `.ars` (Animated Rust Syntax), a custom RON-based format, and decoding it back. It is an early foundation for code analysis, transformation, and visualization projects.
 
-This project uses a robust, AST-based parsing strategy powered by the `syn` crate to accurately understand and reconstruct Rust code.
+Parsing currently combines `syn`-based analysis of function bodies with lightweight regex extraction of top-level items. **Byte-exact round-tripping is a goal, not yet a guarantee** — see [Known limitations](#️-known-limitations) before relying on the output.
 
 ## Demonstration
 
-The following demonstration shows the basic workflow of encoding a Rust source file and decoding it back into a perfect replica.
+The following demonstration shows the basic workflow of encoding a Rust source file and decoding it back.
 
 *(To generate `demo.gif`, run `vhs demo.tape`)*
 <p align="center">
@@ -27,16 +27,22 @@ The following demonstration shows the basic workflow of encoding a Rust source f
 
 ## ✨ Features
 
--   **High-Fidelity Reconstruction**: Decoded source is character-for-character identical to the original.
--   **Robust Parsing**: Uses `syn` to build an Abstract Syntax Tree for accurate parsing of complex code.
--   **CLI Interface**: Simple and intuitive command-line experience powered by `clap`.
--   **Handles Complex Syntax**: Correctly parses and reconstructs:
-    -   Modules, Traits, Structs, Enums
-    -   Functions (including `async` and generics)
-    -   Constants and Static variables
-    -   Macros, Type Aliases, and `use` statements
-    -   Function bodies with loops, conditionals, and expressions.
--   **File & Directory Support**: Encode/decode single files or entire project directories recursively.
+-   **Structured Encoding**: Rust items are extracted into a typed, serde-serializable `.ars` model (RON format).
+-   **Hybrid Parsing**: `syn` is used to analyze function bodies; top-level items are captured with targeted extractors.
+-   **CLI Interface**: Two commands — `walt encode <input> <output>` and `walt decode <input> <output>`.
+-   **Common Syntax Coverage**: Modules, traits, structs, enums, functions (incl. `async` and generics), consts, statics, macros, type aliases, and `use` statements.
+-   **File & Directory Support**: Encode/decode single files or entire project directories recursively, preserving layout.
+
+## ⚠️ Known limitations
+
+This is a pre-1.0 experiment. Current round-trip behavior is **lossy**:
+
+-   Item order is normalized by category on decode (e.g. all functions are emitted together); original interleaving is not preserved.
+-   Comments and doc comments are not encoded and are dropped on decode.
+-   Statement formatting inside function bodies is normalized (token-stream spacing).
+-   Some complex signatures (e.g. `where` clauses, certain generic/return types) can be mis-parsed; always diff decoded output before use.
+
+`./tester.sh` is the round-trip gate: it requires a byte-identical encode/decode cycle and currently documents the gap to close.
 
 ## 🚀 Installation
 
@@ -45,7 +51,7 @@ Ensure you have the Rust toolchain installed. You can then install `walt` direct
 1.  **Clone the repository:**
     ```sh
     git clone <repository_url>
-    cd walt_v1
+    cd walt
     ```
 
 2.  **Install the binary:**
@@ -56,11 +62,9 @@ Ensure you have the Rust toolchain installed. You can then install `walt` direct
 
 ## Usage
 
-Walt's CLI is straightforward, with two main commands: `encode` and `decode`.
+Walt's CLI has two commands: `encode` and `decode`.
 
 ### Encoding
-
-To encode a Rust file (`.rs`) into the Animated Rust Syntax format (`.ars`):
 
 ```sh
 # Encode a single file
@@ -71,8 +75,6 @@ walt encode <input_directory> <output_directory>
 ```
 
 ### Decoding
-
-To decode an `.ars` file back into a Rust source file (`.rs`):
 
 ```sh
 # Decode a single file
@@ -92,12 +94,11 @@ To contribute or work on the project locally:
     ```
 
 2.  **Run tests:**
-    The project includes unit tests and a comprehensive end-to-end test script.
     ```sh
     # Run unit tests
     cargo test
 
-    # Run the end-to-end accuracy test script
+    # Run the end-to-end round-trip gate (byte-identical required)
     ./tester.sh
     ```
 
