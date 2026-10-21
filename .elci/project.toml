@@ -1,0 +1,32 @@
+# ELCI project manifest — ELCI-RGCA-001 §5
+# Provisional (Phase 1 machine draft). Human review required for Tier-S/A.
+schema_version = "1.0"
+
+[project]
+id = "Walt"
+name = "Walt"
+descriptor = "Walt is a CLI tool for converting Rust source code into a lightweight, custom “Animated Rust Syntax” format (.ars), and back again — without losing any fidelity. It uses a robust AST-based parser (via the syn crate) to ensure that decoding reconstructs the original Rust exactly,"
+status = "experimental"
+maturity = "prototype"
+class = "experiment"
+
+[ownership]
+organisation = "elci-group"
+maintainer = "ELCI Group"
+
+[architecture]
+independent_boundary = false
+boundary_reason = "Provisional Phase 1 classification (tier REVIEW); pending §17 rationalisation review."
+parent = []
+capabilities = []
+consumers = []
+
+[authority]
+human_write_authority = true
+agent_write_authority = false
+autonomous_operation = false
+
+[lifecycle]
+introduced = "2025"
+supersedes = []
+superseded_by = []
